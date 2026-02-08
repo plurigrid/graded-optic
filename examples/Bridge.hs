@@ -4,8 +4,8 @@
 -- Module      : Bridge
 -- Description : Three scenarios × four semirings — when sites disagree
 --
--- "Different sites reveal different invariants of the same underlying
--- structure." But what happens when they *disagree*?
+-- Different semirings reveal different invariants of the same underlying
+-- structure. But what happens when they *disagree*?
 --
 -- We run three transfer patterns through four semirings:
 --
@@ -17,10 +17,10 @@
 -- chain. The round-trip signal is Minus (-1) and the amount signal is
 -- also Minus (-1), but Minus × Minus = Plus in GF(3). Double-negative
 -- equals positive — the field's multiplicative structure betrays us.
--- The Bayesian site correctly assigns low likelihood.
+-- The log-likelihood semiring correctly assigns low weight.
 --
 -- This is the whole point: no single semiring is universally correct.
--- The classifying topos needs ALL the sites.
+-- You need all of them to triangulate.
 module Main where
 
 import Data.Functor.Identity (Identity, runIdentity)
@@ -114,7 +114,7 @@ timingDensity ts =
      else fromIntegral (length ts) / span'
 
 -- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
--- § Site 1: Log Double — Bayesian
+-- § Semiring 1: Log Double — log-likelihood
 -- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 scoreLog :: [Transfer] -> GradedWeightedT (Log Double) Identity ()
@@ -127,7 +127,7 @@ scoreLog ts = do
   gscore (Exp logLik)
 
 -- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
--- § Site 2: GF(3) — Ternary Trit Classification
+-- § Semiring 2: GF(3) — Ternary Trit Classification
 -- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 scoreGF3 :: [Transfer] -> GradedWeightedT GF3 Identity ()
@@ -148,7 +148,7 @@ scoreGF3 ts = do
   gscore (closeTrit <.> amtTrit <.> timTrit)
 
 -- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
--- § Site 3: Tropical — Min-cost path
+-- § Semiring 3: Tropical — Min-cost path
 -- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 scoreTropical :: [Transfer] -> GradedWeightedT (Tropical Double) Identity ()
@@ -166,7 +166,7 @@ scoreTropical ts = do
     else gscore (Tropical (fromIntegral (length ts)))  -- honest transfers have base cost
 
 -- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
--- § Site 4: Polynomial — Operation Accounting
+-- § Semiring 4: Polynomial — Operation Accounting
 -- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 scorePoly :: [Transfer] -> GradedWeightedT (Poly Int) Identity ()
@@ -260,10 +260,10 @@ main = do
   putStrLn "  KEY FINDING: GF(3) false-positives on organic chain."
   putStrLn "  The chain is open (Minus) with divergent amounts (Minus),"
   putStrLn "  but Minus × Minus = Plus in the field. Double-negative = positive."
-  putStrLn "  The Bayesian site correctly sees low likelihood."
+  putStrLn "  The log-likelihood semiring correctly assigns low weight."
   putStrLn ""
   putStrLn "  No single semiring is the right classifier."
-  putStrLn "  The classifying topos needs all the sites."
+  putStrLn "  You need all of them to triangulate."
 
 -- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 -- § Display Helpers

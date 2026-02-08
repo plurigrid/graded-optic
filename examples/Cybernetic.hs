@@ -3,7 +3,7 @@
 -- Module      : Cybernetic
 -- Description : Adaptive agent learns from 8 observations, 3-stage pipeline, Para learner
 --
--- The novel combination: graded effects + profunctor optics + categorical cybernetics.
+-- Optics in Kl(Writer g): graded effects + profunctor optics + categorical cybernetics.
 --
 -- Three demonstrations:
 --
@@ -92,7 +92,7 @@ pipeline3 fA fT fC bA bT bC =
     timingSuspicion' sim = sim  -- high similarity → high suspicion
 
 -- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
--- § Site-Specific Pipelines
+-- § Semiring-Specific Pipelines
 -- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 logPipe :: GradedOptic (Log Double) Observation Observation Bool Bool
@@ -283,7 +283,7 @@ main = do
   putStrLn "The Para learner updates weights from error, with both forward"
   putStrLn "(prediction) and backward (update) channels independently graded."
   putStrLn ""
-  putStrLn "The semiring is the site. The optic is the classifying topos."
+  putStrLn "Different semirings reveal different structure of the same process."
 
 -- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 -- § Display Helpers

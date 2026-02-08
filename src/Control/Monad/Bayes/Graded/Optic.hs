@@ -1,6 +1,7 @@
 -- | Graded Optics — bidirectional processes with semiring-valued channels.
 --
--- The novel combination filling the gap between three constructions:
+-- Optics in Kl(Writer g): concrete optics where each channel accumulates
+-- a semiring grade. Combines:
 --
 -- 1. Semiring-graded effects (Katsumata 2014; our GradedWeightedT)
 -- 2. Profunctor optics (Riley 2018; Clarke, Gibbons, Loregian et al. 2024)
@@ -8,13 +9,10 @@
 --
 -- A 'GradedOptic' is an optic where each channel (forward\/backward)
 -- carries an independent semiring grade. The same bidirectional process,
--- scored through different semirings, reveals different invariants —
--- extending the "three sites, one topos" principle to BOTH directions.
+-- scored through different semirings, reveals different structure.
 --
 -- Forward grade = observation cost.  Backward grade = intervention cost.
 -- Their product = total bidirectional grade.
---
--- The semiring IS the site.  The optic IS the classifying topos.
 module Control.Monad.Bayes.Graded.Optic
   ( -- * Core type
     GradedOptic (..)
@@ -50,7 +48,8 @@ import Control.Monad.Bayes.Graded.Semiring.Class (Semiring (..))
 --
 -- The existential @c@ is the /residual/ — what the optic remembers
 -- between the forward pass (observation) and backward pass (intervention).
--- This is Hedges' \"teleological\" counit structure.
+-- This is the coend variable in the categorical optic formula,
+-- here instantiated in Kl(Writer g).
 --
 -- @
 -- forward:  s → (c, a, g)    — decompose, accumulate forward grade
@@ -62,7 +61,7 @@ import Control.Monad.Bayes.Graded.Semiring.Class (Semiring (..))
 -- * @g ~ ()@: ordinary ungraded optic
 -- * @c ~ ()@: graded arrow pair (no context between passes)
 -- * @c ~ s@: graded lens (full context = original structure)
--- * @g = Log Double@: Bayesian bidirectional inference
+-- * @g = Log Double@: log-likelihood accumulation
 -- * @g = GF3@: ternary bidirectional classifier
 -- * @g = Tropical Double@: min-cost bidirectional path
 -- * @g = Poly Int@: operation accounting (forward ops × backward ops)
@@ -145,11 +144,11 @@ totalGrade op s b = let (_, _, gf, gb) = runOptic op s b in gf <.> gb
 -- § Para: Parameterized Graded Morphisms
 -- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
--- | A parameterized graded morphism (Gavranović 2024).
+-- | A parameterized graded morphism with backward channel.
 --
--- A morphism with learnable parameters @w@, where both the forward
--- computation and the parameter update carry semiring grades.
--- This is the Para construction applied to graded categories.
+-- Extends Gavranović's Para construction (forward: @w → a → b@) with
+-- a backward update channel, making it a parametrised lens in Kl(Writer g).
+-- Both the forward computation and the parameter update carry semiring grades.
 --
 -- @
 -- forward:  w → a → (b, g)           — compute output, graded
