@@ -1,0 +1,89 @@
+cabal-version:   3.0
+name:            graded-bayes
+version:         0.1.0.0
+synopsis:        Semiring-parameterised graded monads for probabilistic programming
+description:
+  Extends tweag/monad-bayes with configurable-semiring graded monads.
+  WeightedT carries a hidden grade (Log Double in StateT); we make it
+  explicit and polymorphic, enabling GF(3) sybil scoring, tropical
+  optimization, polynomial functor accounting, and compositional game
+  theory through the same inference API.
+license:         MIT
+license-file:    LICENSE
+author:          bmorphism
+maintainer:      barton@plurigrid.xyz
+category:        Math, Statistics
+build-type:      Simple
+
+library
+  exposed-modules:
+    Control.Monad.Bayes.Graded.Class
+    Control.Monad.Bayes.Graded.Weighted
+    Control.Monad.Bayes.Graded.Population
+    Control.Monad.Bayes.Graded.Optic
+    Control.Monad.Bayes.Graded.Do
+    Control.Monad.Bayes.Graded.Compat
+    Control.Monad.Bayes.Graded.Semiring.Class
+    Control.Monad.Bayes.Graded.Semiring.LogDomain
+    Control.Monad.Bayes.Graded.Semiring.GF3
+    Control.Monad.Bayes.Graded.Semiring.Tropical
+    Control.Monad.Bayes.Graded.Semiring.Polynomial
+  build-depends:
+    , base          >= 4.18   && < 5
+    , log-domain    >= 0.13   && < 0.14
+    , monad-bayes   >= 1.3    && < 1.4
+    , mtl           >= 2.3    && < 2.4
+    , transformers  >= 0.6    && < 0.7
+    , vector        >= 0.13   && < 0.14
+  hs-source-dirs:  src
+  default-language: GHC2021
+  ghc-options:     -Wall -Wcompat
+  default-extensions:
+    DerivingStrategies
+    DerivingVia
+    GeneralizedNewtypeDeriving
+    MultiParamTypeClasses
+    FunctionalDependencies
+    TypeFamilies
+    ScopedTypeVariables
+    QuantifiedConstraints
+
+executable bridge-example
+  main-is:         Bridge.hs
+  build-depends:
+    , base
+    , graded-bayes
+    , log-domain
+  hs-source-dirs:  examples
+  default-language: GHC2021
+  ghc-options:     -Wall
+
+executable cybernetic-example
+  main-is:         Cybernetic.hs
+  build-depends:
+    , base
+    , graded-bayes
+    , log-domain
+  hs-source-dirs:  examples
+  default-language: GHC2021
+  ghc-options:     -Wall
+
+test-suite graded-bayes-test
+  type:            exitcode-stdio-1.0
+  main-is:         Main.hs
+  other-modules:
+    SemiringLaws
+    Isomorphism
+    OpticLaws
+  build-depends:
+    , base
+    , graded-bayes
+    , log-domain
+    , monad-bayes
+    , mtl
+    , QuickCheck     >= 2.14
+    , tasty          >= 1.4
+    , tasty-quickcheck >= 0.10
+  hs-source-dirs:  test
+  default-language: GHC2021
+  ghc-options:     -Wall
