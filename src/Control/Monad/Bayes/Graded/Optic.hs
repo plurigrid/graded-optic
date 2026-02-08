@@ -1,7 +1,8 @@
 -- | Graded Optics — bidirectional processes with semiring-valued channels.
 --
 -- Optics in Kl(Writer g): concrete optics where each channel accumulates
--- a semiring grade. Combines:
+-- a grade from a monoid (the multiplicative fragment of a semiring,
+-- or any 'Grade' instance). Combines:
 --
 -- 1. Semiring-graded effects (Katsumata 2014; our GradedWeightedT)
 -- 2. Profunctor optics (Riley 2018; Clarke, Gibbons, Loregian et al. 2024)
@@ -13,6 +14,27 @@
 --
 -- Forward grade = observation cost.  Backward grade = intervention cost.
 -- Their product = total bidirectional grade.
+--
+-- __Grading hierarchy.__ This library works at the discrete level:
+--
+-- @
+-- Semiring        ⊂  Monoidal category  ⊂  Contextad
+-- (this library)     (actegory action)     (wreath in Span)
+-- @
+--
+-- A semiring is a monoidal category with one object. The proper
+-- generalization (Capucci & Myers 2024, \"Contextads as Wreaths\")
+-- grades by an arbitrary monoidal category acting on the base via
+-- an actegory, or more generally by a contextad (a wreath in a
+-- tricategory of spans). The Ctx construction (wreath product)
+-- unifies Kleisli, Para, and Span as special cases.
+--
+-- This library operates at the bottom of that hierarchy. The 'Grade'
+-- class captures the multiplicative monoid @(g, \<.\>, one)@ — what
+-- optic composition actually needs. The full 'Semiring' (adding
+-- @zero@ and @\<+\>@) is only required by 'GradedWeightedT' for
+-- combining weights. Generalizing to actegory-graded optics would
+-- replace the @Grade g@ constraint with a monoidal action @Act m c@.
 module Control.Monad.Bayes.Graded.Optic
   ( -- * Core type
     GradedOptic (..)
@@ -37,14 +59,14 @@ module Control.Monad.Bayes.Graded.Optic
   , gradeCyber
   ) where
 
-import Control.Monad.Bayes.Graded.Semiring.Class (Semiring (..))
+import Control.Monad.Bayes.Graded.Semiring.Class (Grade (..))
 
 -- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 -- § The Fundamental Type
 -- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 -- | A graded optic: a bidirectional data accessor where each direction
--- carries a semiring-valued grade.
+-- carries a grade from a monoid ('Grade' instance).
 --
 -- The existential @c@ is the /residual/ — what the optic remembers
 -- between the forward pass (observation) and backward pass (intervention).
@@ -78,7 +100,7 @@ graded :: (s -> (c, a, g)) -> (c -> b -> (t, g)) -> GradedOptic g s t a b
 graded = GradedOptic
 
 -- | Lift an ungraded optic into the graded setting with unit grades.
-ungraded :: Semiring g => (s -> (c, a)) -> (c -> b -> t) -> GradedOptic g s t a b
+ungraded :: Grade g => (s -> (c, a)) -> (c -> b -> t) -> GradedOptic g s t a b
 ungraded fwd bwd = GradedOptic
   (\s -> let (c, a) = fwd s in (c, a, one))
   (\c b -> (bwd c b, one))
@@ -90,7 +112,7 @@ fromLens get put = GradedOptic
   put
 
 -- | Identity optic: passes through unchanged, grades are 'one'.
-identity :: Semiring g => GradedOptic g a a a a
+identity :: Grade g => GradedOptic g a a a a
 identity = GradedOptic (\a -> ((), a, one)) (\() a -> (a, one))
 
 -- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -106,7 +128,7 @@ identity = GradedOptic (\a -> ((), a, one)) (\() a -> (a, one))
 -- This is the key operation: composition respects BOTH the optic
 -- structure AND the grading structure simultaneously.
 infixr 1 |>>>|
-(|>>>|) :: Semiring g
+(|>>>|) :: Grade g
         => GradedOptic g s t a b
         -> GradedOptic g a b x y
         -> GradedOptic g s t x y
@@ -137,7 +159,7 @@ forwardOnly :: GradedOptic g s t a b -> s -> (a, g)
 forwardOnly (GradedOptic fwd _) s = let (_, a, g) = fwd s in (a, g)
 
 -- | Total bidirectional grade: forward grade × backward grade.
-totalGrade :: Semiring g => GradedOptic g s t a b -> s -> b -> g
+totalGrade :: Grade g => GradedOptic g s t a b -> s -> b -> g
 totalGrade op s b = let (_, _, gf, gb) = runOptic op s b in gf <.> gb
 
 -- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -148,7 +170,7 @@ totalGrade op s b = let (_, _, gf, gb) = runOptic op s b in gf <.> gb
 --
 -- Extends Gavranović's Para construction (forward: @w → a → b@) with
 -- a backward update channel, making it a parametrised lens in Kl(Writer g).
--- Both the forward computation and the parameter update carry semiring grades.
+-- Both the forward computation and the parameter update carry grades.
 --
 -- @
 -- forward:  w → a → (b, g)           — compute output, graded
@@ -182,7 +204,7 @@ stepPara (Para w fwd bwd) a feedback =
 -- Backward (coplay): agent receives feedback, updates state, graded.
 --
 -- This is the categorical cybernetics framework of Capucci, Gavranović,
--- Hedges, and Rischel (2021), enriched with semiring grades.
+-- Hedges, and Rischel (2021), enriched with grades.
 data Cyber g obs act = forall st. Cyber
   st                                   -- ^ Internal state
   (st -> obs -> (act, g))              -- ^ Play: observe → act, graded
@@ -196,7 +218,7 @@ stepCyber (Cyber st play coplay) obs feedback =
   in (act, gf, gb, Cyber st' play coplay)
 
 -- | Total grade of a cybernetic system's response.
-gradeCyber :: Semiring g => Cyber g obs act -> obs -> act -> g
+gradeCyber :: Grade g => Cyber g obs act -> obs -> act -> g
 gradeCyber sys obs fb =
   let (_, gf, gb, _) = stepCyber sys obs fb
   in gf <.> gb
